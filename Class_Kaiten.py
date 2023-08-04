@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 import json
 import pandas as pd
 import requests
+
 
 class KaitenDataProcessor:
     def __init__(self, token):
@@ -18,6 +20,7 @@ class KaitenDataProcessor:
         }
 
     def get_board_to_space(self):
+        print("Выполняется функция get_board_to_space()")
         url = "https://admblag.kaiten.ru/api/latest/spaces/157246/boards"
         board_response = requests.get(url, headers=self.headers)
         if board_response.status_code == 200:
@@ -46,6 +49,7 @@ class KaitenDataProcessor:
             return board_ids, board_titles, column_ids, column_titles
 
     def get_card(self, board_id, column_id):
+        print(f"Выполняется функция get_card() для board_id={board_id}, column_id={column_id}")
         url = f"https://admblag.kaiten.ru/api/latest/boards/{board_id}/"
         card_response = requests.get(url, headers=self.headers)
         if card_response.status_code == 200:
@@ -55,6 +59,7 @@ class KaitenDataProcessor:
             return card_ids
 
     def get_card_description(self, card_ids):
+        print(f"Выполняется функция get_card_description() для card_ids={card_ids}")
         titles = []
         descriptions = []
         for card_id in card_ids:
@@ -69,6 +74,7 @@ class KaitenDataProcessor:
         return titles, descriptions
 
     def get_comments(self, card_id):
+        print(f"Выполняется функция get_comments() для card_id={card_id}")
         comments_url = f"https://admblag.kaiten.ru/api/latest/cards/{card_id}/comments"
         comments_response = requests.get(comments_url, headers=self.headers)
 
@@ -85,13 +91,14 @@ class KaitenDataProcessor:
             return []
 
     def process_data(self):
+        print("Начинается обработка данных")
         # Call the function to retrieve the data
         board_ids, board_titles, column_ids, column_titles = self.get_board_to_space()
 
-        # Iterate over board_ids and column_ids together using zip()
         for board_id, column_id in zip(board_ids, column_ids):
+            print(f"Обрабатывается board_id={board_id}, column_id={column_id}")
             card_ids = self.get_card(board_id, column_id)
-            if card_ids is not None:  # Check if card_ids is not None before appending
+            if card_ids is not None:
                 self.data["Board Id"].extend([board_id] * len(card_ids))
                 self.data["Board Title"].extend([board_titles[board_ids.index(board_id)]] * len(card_ids))
                 self.data["Column Id"].extend([column_id] * len(card_ids))
@@ -102,18 +109,22 @@ class KaitenDataProcessor:
                 self.data["Title"].extend(titles)
                 self.data["Description"].extend(descriptions)
 
-                # Retrieve and store comments for each card
                 for card_id in card_ids:
                     comments = self.get_comments(card_id)
                     self.data["Comments"].append("".join([f"{comment[1]}: {comment[0]}\n" for comment in comments]))
 
+        print("Завершение обработки данных")
+
     def to_dataframe(self):
+        print("Создание DataFrame")
         df = pd.DataFrame(self.data)
         return df
 
     def to_excel(self, file_path):
+        print(f"Сохранение в Excel: {file_path}")
         df = self.to_dataframe()
         df.to_excel(file_path, index=False)
+
 
 # Usage example:
 if __name__ == "__main__":
@@ -121,3 +132,4 @@ if __name__ == "__main__":
     data_processor = KaitenDataProcessor(token)
     data_processor.process_data()
     data_processor.to_excel("output.xlsx")
+    input("Нажмите Enter для завершения...")

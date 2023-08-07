@@ -9,13 +9,14 @@ class KaitenDataProcessor:
         self.token = token
         self.headers = {"Authorization": f"Bearer {self.token}"}
         self.data = {
-            "Board Id": [],
+            # "Board Id": [],
             "Board Title": [],
-            "Column Id": [],
+            # "Column Id": [],
             "Column Title": [],
-            "Cards Id": [],
+            # "Cards Id": [],
             "Title": [],
             "Description": [],
+            "Members": [],
             "Comments": [],
         }
 
@@ -62,6 +63,7 @@ class KaitenDataProcessor:
         print(f"Выполняется функция get_card_description() для card_ids={card_ids}")
         titles = []
         descriptions = []
+        full_names = []
         for card_id in card_ids:
             card_url = f"https://admblag.kaiten.ru/api/latest/cards/{card_id}"
             card_response = requests.get(card_url, headers=self.headers)
@@ -71,7 +73,11 @@ class KaitenDataProcessor:
                 description = card_data.get("description")
                 titles.append(title)
                 descriptions.append(description)
-        return titles, descriptions
+
+                members = card_data.get("members", [])
+                members_names = [member.get("full_name") for member in members]
+                full_names.append(", ".join(members_names))
+        return titles, descriptions, full_names
 
     def get_comments(self, card_id):
         print(f"Выполняется функция get_comments() для card_id={card_id}")
@@ -99,15 +105,16 @@ class KaitenDataProcessor:
             print(f"Обрабатывается board_id={board_id}, column_id={column_id}")
             card_ids = self.get_card(board_id, column_id)
             if card_ids is not None:
-                self.data["Board Id"].extend([board_id] * len(card_ids))
+                # self.data["Board Id"].extend([board_id] * len(card_ids))
                 self.data["Board Title"].extend([board_titles[board_ids.index(board_id)]] * len(card_ids))
-                self.data["Column Id"].extend([column_id] * len(card_ids))
+                # self.data["Column Id"].extend([column_id] * len(card_ids))
                 self.data["Column Title"].extend([column_titles[column_ids.index(column_id)]] * len(card_ids))
-                self.data["Cards Id"].extend(card_ids)
+                # self.data["Cards Id"].extend(card_ids)
 
-                titles, descriptions = self.get_card_description(card_ids)
+                titles, descriptions, full_names = self.get_card_description(card_ids)
                 self.data["Title"].extend(titles)
                 self.data["Description"].extend(descriptions)
+                self.data["Members"].extend(full_names)
 
                 for card_id in card_ids:
                     comments = self.get_comments(card_id)
@@ -131,5 +138,6 @@ if __name__ == "__main__":
     token = "d7167686-0d84-4bfb-8181-5fe4d1eef5f1"
     data_processor = KaitenDataProcessor(token)
     data_processor.process_data()
+    # data_processor.get_card_description("13027694")
     data_processor.to_excel("output.xlsx")
     input("Нажмите Enter для завершения...")

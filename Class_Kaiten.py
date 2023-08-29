@@ -135,7 +135,6 @@ class KaitenDataProcessor:
 
 # Usage example:
 if __name__ == "__main__":
-    token = "d7167686-0d84-4bfb-8181-5fe4d1eef5f1"
     data_processor = KaitenDataProcessor(token)
     data_processor.process_data()
     # data_processor.get_card_description("13027694")
